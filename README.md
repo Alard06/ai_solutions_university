@@ -12,4 +12,25 @@
 - Python
 
 
+###Создать виртуальное окружение:
+```
+python -m venv venv
+source venv/bin/activate
+```
+
+###Установить зависимости:
+```
+pip install -r requirements.txt
+```
+
+###Запустить программу:
+```
+python main.py
+```
+
+###В файл .env добавить API ключ для ChatGPT и Proxy.
+
+API_KEY_CHATGPT=
+PROXY_URL=
+
 
