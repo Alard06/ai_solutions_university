@@ -8,7 +8,7 @@
 - Selenium
 - BeautifulSoup
 - OpenAI
-- DeepSeek
+- ChatGPT
 - Python
 
 
@@ -31,6 +31,9 @@ python main.py
 ### В файл .env добавить API ключ для ChatGPT и Proxy.
 
 API_KEY_CHATGPT=
+
 PROXY_URL=
+
 LOGIN = 
+
 PASSWORD = 
