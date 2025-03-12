@@ -146,6 +146,4 @@ class Parse:
         self.driver.quit()
 
 
-# Запуск парсера
-parse = Parse(login="stu-ipo-21-16", password="rkH-34Q-B2a-aQw")
-parse.start_test_loop("http://edu.verish.net/mod/lesson/view.php?id=35&pageid=45")
+
