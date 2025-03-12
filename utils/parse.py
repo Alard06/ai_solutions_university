@@ -3,27 +3,14 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from chatgpt_req import ChatGPT
 from typing import Union
+from .general import GeneralParse
 
-class Parse:
+class TestInsideTheLesson(GeneralParse):
+    """Класс для прохождения теста внутри лекции."""
     def __init__(self, login: str, password: str):
-        self.driver = webdriver.Chrome()
-        self.wait = WebDriverWait(self.driver, 2)
-        self.login = login
-        self.password = password
-        self.chatgpt = ChatGPT()
+        super().__init__(login, password)
 
-    def start_test_loop(self, url: str):
-        """Запускает цикл прохождения теста."""
-        self.driver.get(url)
-        if self.driver.current_url != url:
-            self.login_page()
-            self.driver.get(url)
-
-        while True:
-            if not self.test_solution():
-                break
 
     def test_solution(self):
         """Решает один вопрос теста и переходит к следующему."""
@@ -106,21 +93,6 @@ class Parse:
             print("Не удалось найти вопрос или варианты ответа.")
             return None, None
 
-    def login_page(self):
-        """Метод для входа на страницу авторизации."""
-        try:
-            login_input = self.wait.until(EC.presence_of_element_located((By.XPATH, '//*[@id="username"]')))
-            login_input.send_keys(self.login)
-
-            password_input = self.driver.find_element(By.XPATH, '//*[@id="password"]')
-            password_input.send_keys(self.password)
-
-            login_button = self.driver.find_element(By.XPATH, '//*[@id="loginbtn"]')
-            login_button.click()
-            print("Вход выполнен успешно.")
-        except Exception:
-            print("Ошибка при входе в систему.")
-
 
     def get_progress(self) -> Union[str, None]:
         """Извлекает процент выполнения из прогресс-бара."""
@@ -134,16 +106,73 @@ class Parse:
         except Exception:
             print("Не удалось получить прогресс.")
             return None
+
+
+
+class TestOutsideTheLesson(GeneralParse):
+    """Класс для прохождения теста вне лекции."""
+    def __init__(self, login: str, password: str):
+        super().__init__(login, password)
+
+
+    def test_solution(self):
+        """Обрабатывает один вопрос теста"""
+        self.find_element_start_test()
+
+        question_text, answers = self.find_elements_tests()
         
+        if not question_text or not answers:
+            print("Тест завершен или вопрос не найден.")
+            result = input("Введите ! для выхода...")
+            return result != "!"
+            
+        correct_answer = self.find_answer(question_text, answers)
 
-    def find_answer(self, question_text: str, answers: list) -> str:
-        """Определяет правильный ответ на вопрос."""
-        text = question_text + '\n' + '\n'.join(answers)
-        return self.chatgpt.get_answer(text)
+        if correct_answer in answers:
+            index = answers.index(correct_answer)
+            answer_elements = self.driver.find_elements(By.CSS_SELECTOR, ".answer input[type='radio']")
+            
+            if index < len(answer_elements):
+                answer_elements[index].click()
+                print(f"Выбран ответ: {correct_answer}")
 
-    def close_driver(self):
-        """Метод для закрытия драйвера."""
-        self.driver.quit()
+                try:
+                    next_button = WebDriverWait(self.driver, 5).until(
+                        EC.element_to_be_clickable((By.ID, "mod_quiz-next-nav"))
+                    )
+                    next_button.click()
+                    return True
+                except Exception:
+                    print("Не удалось найти кнопку 'Следующая страница'")
+                    return False
+        else:
+            print("Правильный ответ не найден среди предложенных.")
+            return False
 
+    def find_elements_tests(self):
+        """Извлекает текст вопроса и варианты ответов."""
+        try:
+            question_text = self.driver.find_element(By.CLASS_NAME, "qtext").text
+            answer_elements = self.driver.find_elements(By.CSS_SELECTOR, ".answer .flex-fill")
+            answers = [answer.text.strip() for answer in answer_elements]
+            return question_text, answers
+        except Exception:
+            print("Не удалось найти вопрос или варианты ответа.")
+            return None, None
 
+    def find_element_start_test(self):
+        """Ищет и нажимает кнопку начала теста, если она есть."""
+        try:
+            button = WebDriverWait(self.driver, 5).until(
+                EC.element_to_be_clickable((By.XPATH, "//button[contains(text(), 'Попытка теста')]"))
+            )
+            button.click()
 
+        except Exception:
+            try:
+                button = WebDriverWait(self.driver, 5).until(
+                    EC.element_to_be_clickable((By.XPATH, "//button[contains(text(), 'Продолжить текущую попытку')]"))
+                )
+                button.click()
+            except Exception:
+                print("Не удалось найти кнопку 'Попытка теста'")
