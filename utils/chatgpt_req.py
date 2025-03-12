@@ -12,7 +12,7 @@ class ChatGPT:
     def __init__(self):
         load_dotenv()
         
-        proxy_url = "http://QCbDT52oW8QR:RNW78Fm5@pool.proxy.market:10344"
+        proxy_url = os.getenv("PROXY_URL")
 
         self.http_client = httpx.Client(proxy=proxy_url)
         self.client = OpenAI(
